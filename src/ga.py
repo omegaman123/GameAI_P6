@@ -22,10 +22,11 @@ options = [
     "|",  # a pipe segment
     "T",  # a pipe top
     "E",  # an enemy
-    #"f",  # a flag, do not generate
-    #"v",  # a flagpole, do not generate
-    #"m"  # mario's start position, do not generate
+    # "f",  # a flag, do not generate
+    # "v",  # a flagpole, do not generate
+    # "m"  # mario's start position, do not generate
 ]
+
 
 # The level as a grid of tiles
 
@@ -71,9 +72,20 @@ class Individual_Grid(object):
 
         left = 1
         right = width - 1
+        weight_dict = {"-": 100,  # an empty space
+                       "X": 10,  # a solid wall
+                       "?": 10,  # a question mark block with a coin
+                       "M": 10,  # a question mark block with a mushroom
+                       "B": 10,  # a breakable block
+                       "o": 10,  # a coin
+                       "|": 10,  # a pipe segment
+                       "T": 10,  # a pipe top
+                       "E": 10,  # an enemy
+                       }
         for y in range(height):
             for x in range(left, right):
-
+                weights = list(weight_dict.values())
+                
                 pass
         return genome
 
@@ -91,7 +103,7 @@ class Individual_Grid(object):
                 # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
                 other_g = other.genome[y][x]
                 self_g = self.genome[y][x]
-                new_genome[y][x] = random.choice([self_g,other_g])
+                new_genome[y][x] = random.choice([self_g, other_g])
         # do mutation; note we're returning a one-element tuple here
         new_genome = self.mutate(new_genome)
         return (Individual_Grid(new_genome),)
@@ -128,7 +140,7 @@ class Individual_Grid(object):
 
 
 def offset_by_upto(val, variance, min=None, max=None):
-    val += random.normalvariate(0, variance**0.5)
+    val += random.normalvariate(0, variance ** 0.5)
     if min is not None and val < min:
         val = min
     if max is not None and val > max:
@@ -142,6 +154,7 @@ def clip(lo, val, hi):
     if val > hi:
         return hi
     return val
+
 
 # Inspired by https://www.researchgate.net/profile/Philippe_Pasquier/publication/220867545_Towards_a_Generic_Framework_for_Automated_Video_Game_Level_Creation/links/0912f510ac2bed57d1000000.pdf
 
@@ -335,7 +348,8 @@ class Individual_DE(object):
         elt_count = random.randint(8, 128)
         g = [random.choice([
             (random.randint(1, width - 2), "0_hole", random.randint(1, 8)),
-            (random.randint(1, width - 2), "1_platform", random.randint(1, 8), random.randint(0, height - 1), random.choice(["?", "X", "B"])),
+            (random.randint(1, width - 2), "1_platform", random.randint(1, 8), random.randint(0, height - 1),
+             random.choice(["?", "X", "B"])),
             (random.randint(1, width - 2), "2_enemy"),
             (random.randint(1, width - 2), "3_coin", random.randint(0, height - 1)),
             (random.randint(1, width - 2), "4_block", random.randint(0, height - 1), random.choice([True, False])),
@@ -353,7 +367,7 @@ def generate_successors(population):
     results = []
     pop = population.copy()
     length = len(pop)
-    middle = length//2
+    middle = length // 2
     first_half = pop[:middle]
     second_half = pop[middle:]
     for i in range(length):
@@ -402,7 +416,7 @@ def ga():
                     print("Max fitness:", str(best.fitness()))
                     print("Average generation time:", (now - start) / generation)
                     print("Net time:", now - start)
-                    with open("levels/last.txt", 'w') as f:
+                    with open("Player/Assets/Resources/Levels/last.txt", 'w') as f:
                         for row in best.to_level():
                             f.write("".join(row) + "\n")
                 generation += 1
