@@ -91,7 +91,7 @@ class Individual_Grid(object):
                 # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
                 other_g = other.genome[y][x]
                 self_g = self.genome[y][x]
-                pass
+                new_genome[y][x] = random.choice([self_g,other_g])
         # do mutation; note we're returning a one-element tuple here
         new_genome = self.mutate(new_genome)
         return (Individual_Grid(new_genome),)
@@ -352,15 +352,20 @@ Individual = Individual_Grid
 def generate_successors(population):
     results = []
     pop = population.copy()
-    for i in pop:
-        p1 = random.choice(pop)
-        p2 = random.choice(pop)
-        p1.generate_children(p2)
+    length = len(pop)
+    middle = length//2
+    first_half = pop[:middle]
+    second_half = pop[middle:]
+    for i in range(length):
+        p1 = random.choice(first_half)
+        p2 = random.choice(second_half)
+        new_grid = p1.generate_children(p2)
+        results.append(new_grid[0])
 
     # STUDENT Design and implement this
     # Hint: Call generate_children() on some individuals and fill up results.
 
-    return population
+    return results
 
 
 def ga():
