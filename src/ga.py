@@ -7,6 +7,7 @@ import random
 import shutil
 import time
 import math
+import random
 
 width = 200
 height = 16
@@ -72,6 +73,7 @@ class Individual_Grid(object):
         right = width - 1
         for y in range(height):
             for x in range(left, right):
+
                 pass
         return genome
 
@@ -82,12 +84,16 @@ class Individual_Grid(object):
         # do crossover with other
         left = 1
         right = width - 1
+        # Y, X
         for y in range(height):
             for x in range(left, right):
                 # STUDENT Which one should you take?  Self, or other?  Why?
                 # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
+                other_g = other.genome[y][x]
+                self_g = self.genome[y][x]
                 pass
         # do mutation; note we're returning a one-element tuple here
+        new_genome = self.mutate(new_genome)
         return (Individual_Grid(new_genome),)
 
     # Turn the genome into a level string (easy for this genome)
@@ -345,9 +351,16 @@ Individual = Individual_Grid
 
 def generate_successors(population):
     results = []
+    pop = population.copy()
+    for i in pop:
+        p1 = random.choice(pop)
+        p2 = random.choice(pop)
+        p1.generate_children(p2)
+
     # STUDENT Design and implement this
     # Hint: Call generate_children() on some individuals and fill up results.
-    return results
+
+    return population
 
 
 def ga():
