@@ -87,14 +87,14 @@ class Individual_Grid(object):
         for y in range(height):
             weight_dict["-"] -= 6
             if y == 15:
-                weight_dict["B"] = 75
-                weight_dict["X"] = 75
+                weight_dict["B"] = 40
+                weight_dict["X"] = 40
 
             for x in range(left, right):
                 weights = list(weight_dict.values())
                 current = genome[y][x]
                 c = random.choices(options, weights)[0]
-                genome[y][x] = random.choice([c,current])
+                genome[y][x] = random.choice([c, current])
         return genome
 
     # Create zero or more children from self and other
