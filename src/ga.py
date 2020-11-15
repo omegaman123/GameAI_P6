@@ -74,7 +74,7 @@ class Individual_Grid(object):
 
         left = 1
         right = width - 1
-        weight_dict = {"-": 100,  # an empty space
+        weight_dict = {"-": 200,  # an empty space
                        "X": 1,  # a solid wall
                        "?": 1,  # a question mark block with a coin
                        "M": 1,  # a question mark block with a mushroom
@@ -85,14 +85,20 @@ class Individual_Grid(object):
                        "E": 0,  # an enemy
                        }
         for y in range(height):
-            weight_dict["-"] -= 6
+            weight_dict["-"] -= 10
             if y == 15:
-                weight_dict["B"] = 40
                 weight_dict["X"] = 40
-
             for x in range(left, right):
+                if y > 13 and x < 4:
+                    genome[y][x] = "-"
+                    continue
                 weights = list(weight_dict.values())
                 current = genome[y][x]
+                if current is "|":
+                    if y > 12:
+                        for i in range(y+1, height-1):
+                            genome[i][x] = "|"
+                            continue
                 c = random.choices(options, weights)[0]
                 genome[y][x] = random.choice([c, current])
         return genome
