@@ -34,6 +34,7 @@ public class SMBCamera : MonoBehaviour {
 
 		_height = 2f * _camera.orthographicSize;
 		_width = _height * _camera.aspect;
+		Application.targetFrameRate = 60;
 	}
 
 	void UpdateOrthoSize()

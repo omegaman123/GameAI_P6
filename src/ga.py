@@ -68,39 +68,86 @@ class Individual_Grid(object):
 
     # Mutate a genome into a new genome.  Note that this is a _genome_, not an individual!
     def mutate(self, genome):
+        # print_genome("BEFORE MUTATION", genome)
+
         # STUDENT implement a mutation operator, also consider not mutating this individual
         # STUDENT also consider weighting the different tile types so it's not uniformly random
         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
 
         left = 1
-        right = width - 1
-        weight_dict = {"-": 200,  # an empty space
-                       "X": 1,  # a solid wall
-                       "?": 1,  # a question mark block with a coin
-                       "M": 1,  # a question mark block with a mushroom
-                       "B": 1,  # a breakable block
-                       "o": 2,  # a coin
-                       "|": 1,  # a pipe segment
-                       "T": 1,  # a pipe top
-                       "E": 0,  # an enemy
+        right = width -1
+        # weight_dict = {"-": 1000,  # an empty space
+        #                "X": 100,  # a solid wall
+        #                "?": 10,  # a question mark block with a coin
+        #                "M": 10,  # a question mark block with a mushroom
+        #                "B": 10,  # a breakable block
+        #                "o": 20,  # a coin
+        #                "|": 20,  # a pipe segment
+        #                "T": 20,  # a pipe top
+        #                "E": 1,  # an enemy
+        #                }
+
+        weight_dict = {"-": 1000,  # an empty space
+                       "X": 0,  # a solid wall
+                       "?": 10,  # a question mark block with a coin
+                       "M": 10,  # a question mark block with a mushroom
+                       "B": 10,  # a breakable block
+                       "o": 20,  # a coin
+                       "|": 0,  # a pipe segment
+                       "T": 0,  # a pipe top
+                       "E": 5,  # an enemy
                        }
+        transformations = [(1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1), (0, 1)]
+        weights = list(weight_dict.values())
+
         for y in range(height):
-            weight_dict["-"] -= 10
-            if y == 15:
-                weight_dict["X"] = 40
+            # weight_dict["-"] -= 10
+            if y == height-1:
+                weights[0] = 10
+                weights[1] = 40
+                weights[8] = 0
+
             for x in range(left, right):
-                if y > 13 and x < 4:
-                    genome[y][x] = "-"
-                    continue
-                weights = list(weight_dict.values())
                 current = genome[y][x]
-                if current is "|":
-                    if y > 12:
-                        for i in range(y+1, height-1):
-                            genome[i][x] = "|"
-                            continue
+                if y > 10 and current == "|":
+                    if genome[y-1][x] != "T" and genome[y-1][x] != "|":
+                        genome[y][x] = "-"
+                    continue
                 c = random.choices(options, weights)[0]
                 genome[y][x] = random.choice([c, current])
+
+                # Overrides
+                if 12 < y < height-1 and x < 4:
+                    genome[y][x] = "-"
+                    continue
+
+                if (y <= 10 or y == 14) and (genome[y][x] == "T") or genome[y][x] == "|":
+                    genome[y][x] = "-"
+                    continue
+
+                if 10 < y < height-1 and genome[y][x] == "T":
+                    genome[y-1][x] = '-'
+                    for i in range(y + 1, height - 1):
+                        genome[i][x] = "|"
+                    continue
+
+            weights[1] += 7
+            if y == 10:
+                weights[7] = 20
+            if y == 13:
+                weights[7] = 0
+            if y == 14:             # "Ground rule"
+                weights[0] = 10
+                weights[1] = 40
+                weights[2] = 1
+                weights[3] = 1
+                weights[4] = 1
+                weights[5] = 1
+                weights[8] = 0
+
+        # genome[14][0] = "m"
+
+        # print_genome("AFTER MUTATION", genome)
         return genome
 
     # Create zero or more children from self and other
@@ -144,7 +191,30 @@ class Individual_Grid(object):
     def random_individual(cls):
         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
         # STUDENT also consider weighting the different tile types so it's not uniformly random
-        g = [random.choices(options, k=width) for row in range(height)]
+        weight_dict = {"-": 1000,  # an empty space
+                       "X": 0,  # a solid wall
+                       "?": 10,  # a question mark block with a coin
+                       "M": 10,  # a question mark block with a mushroom
+                       "B": 10,  # a breakable block
+                       "o": 20,  # a coin
+                       "|": 0,  # a pipe segment
+                       "T": 0,  # a pipe top
+                       "E": 5,  # an enemy
+                       }
+
+        w = list(weight_dict.values())
+        # g = [random.choices(options, weights=w, k=width) for row in range(height)]
+        g = [["-" for col in range(width)] for row in range(height)]
+        for row in range(height):
+            g[row] = random.choices(options, weights=w, k=width)
+            w[1] += 7
+            if row == 10:
+                w[7] = 20       # Only start generating pipe tops in rows 11 onward
+            if row == 13:
+                w[7] = 0        # Do not generate any pipe tops right above ground
+            if row == 14:
+                w[8] = 0        # Do not generate enemies in the ground
+
         g[15][:] = ["X"] * width
         g[14][0] = "m"
         g[7][-1] = "v"
@@ -168,6 +238,18 @@ def clip(lo, val, hi):
     if val > hi:
         return hi
     return val
+
+
+def print_genome(s, g):
+    print(f"{s}: --------------------------------------------------------------------------------------")
+    print("              1         2")
+    print("    012345678901234567890")
+    i = 0
+    for line in g:
+        l = ''.join(line)
+        print("%2d: %s" % (i, l))
+        i = i + 1
+    print("")
 
 
 # Inspired by https://www.researchgate.net/profile/Philippe_Pasquier/publication/220867545_Towards_a_Generic_Framework_for_Automated_Video_Game_Level_Creation/links/0912f510ac2bed57d1000000.pdf
