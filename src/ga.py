@@ -8,6 +8,8 @@ import shutil
 import time
 import math
 import random
+import numpy
+from collections import Counter
 
 width = 200
 height = 16
@@ -73,20 +75,26 @@ class Individual_Grid(object):
         left = 1
         right = width - 1
         weight_dict = {"-": 100,  # an empty space
-                       "X": 10,  # a solid wall
-                       "?": 10,  # a question mark block with a coin
-                       "M": 10,  # a question mark block with a mushroom
-                       "B": 10,  # a breakable block
-                       "o": 10,  # a coin
-                       "|": 10,  # a pipe segment
-                       "T": 10,  # a pipe top
-                       "E": 10,  # an enemy
+                       "X": 1,  # a solid wall
+                       "?": 1,  # a question mark block with a coin
+                       "M": 1,  # a question mark block with a mushroom
+                       "B": 1,  # a breakable block
+                       "o": 2,  # a coin
+                       "|": 1,  # a pipe segment
+                       "T": 1,  # a pipe top
+                       "E": 0,  # an enemy
                        }
         for y in range(height):
+            weight_dict["-"] -= 6
+            if y == 15:
+                weight_dict["B"] = 75
+                weight_dict["X"] = 75
+
             for x in range(left, right):
                 weights = list(weight_dict.values())
-                
-                pass
+                current = genome[y][x]
+                c = random.choices(options, weights)[0]
+                genome[y][x] = random.choice([c,current])
         return genome
 
     # Create zero or more children from self and other
@@ -416,7 +424,7 @@ def ga():
                     print("Max fitness:", str(best.fitness()))
                     print("Average generation time:", (now - start) / generation)
                     print("Net time:", now - start)
-                    with open("Player/Assets/Resources/Levels/last.txt", 'w') as f:
+                    with open("Player/Assets/Resources/Levels/Level1.txt", 'w') as f:
                         for row in best.to_level():
                             f.write("".join(row) + "\n")
                 generation += 1
