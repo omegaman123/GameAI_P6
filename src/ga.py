@@ -75,7 +75,7 @@ class Individual_Grid(object):
         # STUDENT consider putting more constraints on this to prevent pipes in the air, etc
 
         left = 1
-        right = width -1
+        right = width - 1
         # weight_dict = {"-": 1000,  # an empty space
         #                "X": 100,  # a solid wall
         #                "?": 10,  # a question mark block with a coin
@@ -102,22 +102,24 @@ class Individual_Grid(object):
 
         for y in range(height):
             # weight_dict["-"] -= 10
-            if y == height-1:
+            if y == height - 1:
                 weights[0] = 10
                 weights[1] = 40
                 weights[8] = 0
 
             for x in range(left, right):
                 current = genome[y][x]
+                if current is "f":
+                    continue
                 if y > 10 and current == "|":
-                    if genome[y-1][x] != "T" and genome[y-1][x] != "|":
+                    if genome[y - 1][x] != "T" and genome[y - 1][x] != "|":
                         genome[y][x] = "-"
                     continue
                 c = random.choices(options, weights)[0]
                 genome[y][x] = random.choice([c, current])
 
                 # Overrides
-                if 12 < y < height-1 and x < 4:
+                if 12 < y < height - 1 and x < 4:
                     genome[y][x] = "-"
                     continue
 
@@ -125,8 +127,8 @@ class Individual_Grid(object):
                     genome[y][x] = "-"
                     continue
 
-                if 10 < y < height-1 and genome[y][x] == "T":
-                    genome[y-1][x] = '-'
+                if 10 < y < height - 1 and genome[y][x] == "T":
+                    genome[y - 1][x] = '-'
                     for i in range(y + 1, height - 1):
                         genome[i][x] = "|"
                     continue
@@ -136,7 +138,7 @@ class Individual_Grid(object):
                 weights[7] = 20
             if y == 13:
                 weights[7] = 0
-            if y == 14:             # "Ground rule"
+            if y == 14:  # "Ground rule"
                 weights[0] = 10
                 weights[1] = 40
                 weights[2] = 1
@@ -209,11 +211,11 @@ class Individual_Grid(object):
             g[row] = random.choices(options, weights=w, k=width)
             w[1] += 7
             if row == 10:
-                w[7] = 20       # Only start generating pipe tops in rows 11 onward
+                w[7] = 20  # Only start generating pipe tops in rows 11 onward
             if row == 13:
-                w[7] = 0        # Do not generate any pipe tops right above ground
+                w[7] = 0  # Do not generate any pipe tops right above ground
             if row == 14:
-                w[8] = 0        # Do not generate enemies in the ground
+                w[8] = 0  # Do not generate enemies in the ground
 
         g[15][:] = ["X"] * width
         g[14][0] = "m"
@@ -466,16 +468,24 @@ def generate_successors(population):
     middle = length // 2
     first_half = pop[:middle]
     second_half = pop[middle:]
-    for i in range(length):
-        p1 = random.choice(first_half)
-        p2 = random.choice(second_half)
+    pop.sort(key=lambda x: x._fitness, reverse=True)
+    best_prievious = pop[:middle]
+    first_half.sort(key=lambda x: x._fitness, reverse=True)
+    second_half.sort(key=lambda x: x._fitness, reverse=True)
+    for i in range(length//2):
+        p1 = first_half[i]
+        p2 = second_half[i]
         new_grid = p1.generate_children(p2)
         results.append(new_grid[0])
 
     # STUDENT Design and implement this
     # Hint: Call generate_children() on some individuals and fill up results.
-
+    results += best_prievious
     return results
+
+
+def tournament(population):
+    pass
 
 
 def ga():
