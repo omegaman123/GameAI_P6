@@ -520,7 +520,7 @@ def genome_to_base(genome):
     return base
 
 
-Individual = Individual_DE
+Individual = Individual_Grid
 
 
 def generate_successors(population):
@@ -583,19 +583,20 @@ def ga():
             while True:
                 now = time.time()
                 # Print out statistics
+                h = 0
                 if generation > 0:
                     best = max(population, key=Individual.fitness)
                     print("Generation:", str(generation))
                     print("Max fitness:", str(best.fitness()))
                     print("Average generation time:", (now - start) / generation)
                     print("Net time:", now - start)
+                    h = best.fitness()
                     with open("Player/Assets/Resources/Levels/Level1.txt", 'w') as f:
                         for row in best.to_level():
                             f.write("".join(row) + "\n")
                 generation += 1
                 # STUDENT Determine stopping condition
-                stop_condition = False
-                if stop_condition:
+                if h >= 7:
                     break
                 # STUDENT Also consider using FI-2POP as in the Sorenson & Pasquier paper
                 gentime = time.time()
