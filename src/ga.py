@@ -109,7 +109,7 @@ class Individual_Grid(object):
 
             for x in range(left, right):
                 current = genome[y][x]
-                if current is "f":
+                if current == "f":
                     continue
                 if y > 10 and current == "|":
                     if genome[y - 1][x] != "T" and genome[y - 1][x] != "|":
@@ -286,6 +286,22 @@ class Individual_DE(object):
         # STUDENT For example, too many stairs are unaesthetic.  Let's penalize that
         if len(list(filter(lambda de: de[1] == "6_stairs", self.genome))) > 5:
             penalties -= 2
+
+        # If there are too many tall pipes add more penalties
+        l1 = list(filter(lambda de: de[1] == "7_pipe", self.genome))
+        l1.sort(key=lambda h: h[2])
+        before = len(l1)
+        l1 = list(filter(lambda x: x[2] < 4, l1))
+        if len(l1) <= before//2:
+            penalties -= 3
+
+        # Too many holes is not good, add more penalties.
+        if len(list(filter(lambda de: de[1] == "0_hole", self.genome))) > 3:
+            penalties -= 3
+
+        # Too many enemies is not good either
+        if len(list(filter(lambda de: de[1] == "2_enemy", self.genome))) > 5:
+            penalties -= 3
         # STUDENT If you go for the FI-2POP extra credit, you can put constraint calculation in here too and cache it in a new entry in __slots__.
         self._fitness = sum(map(lambda m: coefficients[m] * measurements[m],
                                 coefficients)) + penalties
@@ -299,7 +315,9 @@ class Individual_DE(object):
     def mutate(self, new_genome):
         # STUDENT How does this work?  Explain it in your writeup.
         # STUDENT consider putting more constraints on this, to prevent generating weird things
-        if random.random() < 0.1 and len(new_genome) > 0:
+        # print_genome("BEFORE Mutation", genome_to_base(new_genome))
+        if random.random() < 0.6 and len(new_genome) > 0:
+            # print("***** MUTATING!!! *****")
             to_change = random.randint(0, len(new_genome) - 1)
             de = new_genome[to_change]
             new_de = de
@@ -374,6 +392,7 @@ class Individual_DE(object):
                 pass
             new_genome.pop(to_change)
             heapq.heappush(new_genome, new_de)
+        # print_genome("AFTER Mutation", genome_to_base(new_genome))
         return new_genome
 
     def generate_children(self, other):
@@ -458,7 +477,50 @@ class Individual_DE(object):
         return Individual_DE(g)
 
 
-Individual = Individual_Grid
+def genome_to_base(genome):
+    base = Individual_Grid.empty_individual().to_level()
+    for de in sorted(genome, key=lambda de: (de[1], de[0], de)):
+        # de: x, type, ...
+        x = de[0]
+        de_type = de[1]
+        if de_type == "4_block":
+            y = de[2]
+            breakable = de[3]
+            base[y][x] = "B" if breakable else "X"
+        elif de_type == "5_qblock":
+            y = de[2]
+            has_powerup = de[3]  # boolean
+            base[y][x] = "M" if has_powerup else "?"
+        elif de_type == "3_coin":
+            y = de[2]
+            base[y][x] = "o"
+        elif de_type == "7_pipe":
+            h = de[2]
+            base[height - h - 1][x] = "T"
+            for y in range(height - h, height):
+                base[y][x] = "|"
+        elif de_type == "0_hole":
+            w = de[2]
+            for x2 in range(w):
+                base[height - 1][clip(1, x + x2, width - 2)] = "-"
+        elif de_type == "6_stairs":
+            h = de[2]
+            dx = de[3]  # -1 or 1
+            for x2 in range(1, h + 1):
+                for y in range(x2 if dx == 1 else h - x2):
+                    base[clip(0, height - y - 1, height - 1)][clip(1, x + x2, width - 2)] = "X"
+        elif de_type == "1_platform":
+            w = de[2]
+            h = de[3]
+            madeof = de[4]  # from "?", "X", "B"
+            for x2 in range(w):
+                base[clip(0, height - h - 1, height - 1)][clip(1, x + x2, width - 2)] = madeof
+        elif de_type == "2_enemy":
+            base[height - 2][x] = "E"
+    return base
+
+
+Individual = Individual_DE
 
 
 def generate_successors(population):
@@ -475,8 +537,13 @@ def generate_successors(population):
     for i in range(length//2):
         p1 = first_half[i]
         p2 = second_half[i]
-        new_grid = p1.generate_children(p2)
-        results.append(new_grid[0])
+        if len(p1.genome) == 0:
+            results.append(p2)
+        elif len(p2.genome) == 0:
+            results.append(p1)
+        else:
+            new_grid = p1.generate_children(p2)
+            results.append(new_grid[0])
 
     # STUDENT Design and implement this
     # Hint: Call generate_children() on some individuals and fill up results.
